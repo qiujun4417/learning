@@ -14,8 +14,9 @@ Javassist是一个开源的分析、编辑和创建Java字节码的类库。是�
 
 * javassist和反射
 * javassist如何用
-* java 代理
-* 静态代理和动态代理
+* java 代理模式
+* 静态代理
+* 动态代理
 * CGLIB
 
 
@@ -118,3 +119,118 @@ public class JavassistTiming {
     }
 }
 ```
+## java 代理模式
+
+### 静态代理
+静态代理的UML图如下
+![proxy](pic/proxy.png)
+
+### 代理模式和装饰器模式的区别
+
+一般来讲代理模式和装饰器模式都是实现一个接口, 由代理对象加入实际目标对象来做到代理作用, 但是用法上面代理模式和装饰模式有区别, 装饰器模式关注于在一个对象上动态的添加方法, 然而代理模式关注于控制对对象的访问。换句话说, 用代理模式, 代理类（proxy class）可以对它的客户隐藏一个对象的具体信息。因此, 当使用代理模式的时候, 我们常常在一个代理类中创建一个对象的实例。并且, 当我们使用装饰器模式的时候, 我们通常的做法是将原始对象作为一个参数传给装饰者的构造器。
+
+直接上代码
+
+代理模式:
+
+```java
+//抽象接口
+public interface UserDao {
+    void save(User user);
+}
+```
+
+```java
+/**
+** 具体的业务逻辑
+**/
+public class UserDaoImpl implements UserDao {
+
+    @Override
+    public void save(User user) {
+        String userProfile = String.format(" nick name is : %s with mobile %s", 			user.getNickName(), user.getMobile());
+        System.out.println("save user " + userProfile);
+    }
+}
+```
+
+```java
+/**
+** 代理类
+**/
+public class UserDaoProxy implements UserDao {
+
+    private UserDao userDao;
+
+    public UserDaoProxy(){
+        this.userDao = new UserDaoImpl();
+    }
+  
+    @Override
+    public void save(User user) {
+        System.out.println("before save");
+        userDao.save(user);
+        System.out.println("after save");
+    }
+}
+```
+
+```java
+//单元测试
+public class ProxyTest {
+
+    private User user;
+
+    /**
+     * 静态代理
+     */
+    @Test
+    public void staticProxyTest(){
+        user = new User();
+        user.setAccount("qiujun4417@hotmail.com");
+        user.setBirthday(new Date());
+        user.setMobile("13817396997");
+        user.setNickName("小白");
+        user.setPassword("12345678");
+        user.setUid(UUID.randomUUID().toString());
+        UserDao proxy = new UserDaoProxy();
+        proxy.save(user);
+    }
+}
+```
+
+装饰器模式:
+
+```java
+/**
+*** 装饰者
+**/
+public class Decorator implements UserDao{
+
+    private UserDao userDao;
+
+    public Decorator(UserDao userDao){
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void save(User user) {
+        System.out.println("before save");
+        userDao.save(user);
+        System.out.println("after save");
+    }
+}
+```
+
+```java
+	//单元测试
+	@Test
+    public void decoratorTest(){
+        UserDao redisUserDao = new RedisUserDao();
+        Decorator decorator = new Decorator(redisUserDao);
+        decorator.save(user);
+    }
+```
+
+## 动态代理
+
